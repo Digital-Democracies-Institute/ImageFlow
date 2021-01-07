@@ -1,3 +1,7 @@
+# This code uses a majority of the code found at: https://github.com/zsavvas/memes_pipeline
+# This is just a Refactored version with the use of object oriented design
+# While refactoring, upgraded code to run with latest version of libraries and python
+
 import os
 
 import sys
