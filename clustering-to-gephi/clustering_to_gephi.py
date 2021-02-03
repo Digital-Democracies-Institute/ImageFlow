@@ -3,6 +3,9 @@ import json
 import os
 import numpy as np
 
+#global variable for multi-platform filter
+filter = 'no'
+
 # Borrowed method to parse absolute and relative paths
 def splitall(path):
     allparts = []
@@ -52,18 +55,31 @@ def multiplatform_filter(dataframe):
     df2 = dataframe.drop_duplicates(["cluster", "socialmedia"])
     df = df2.groupby('cluster')['socialmedia'].agg(size= len, set= lambda x: set(x))
     single_platforms = df[df['size'] == 1]
+    multi_platforms = df[df['size'] > 1]
 
     single_platforms = pd.DataFrame(single_platforms)
-    cluster_list = single_platforms.index.values.tolist()
-    output = []
+    multi_platforms = pd.DataFrame(multi_platforms)
+    single_cluster_list = single_platforms.index.values.tolist()
+    output_single = []
 
     print("Scanning files...")
 
-    output.append(dataframe.loc[dataframe['cluster'].isin(cluster_list)])
-    df2 = pd.DataFrame(np.concatenate(output))
-    df2 = df2.rename(columns={0:"cluster", 1:"FileName", 2:"images", 3:"socialmedia", 4:"URL", 5:"SocialMedia", 6:"BoardName", 7:"group", 8:"hashtags", 9:"UserName", 10:"TimeStamp", 11:"date", 12:"time"})
-    print(df2)
-    return df2
+    output_single.append(dataframe.loc[dataframe['cluster'].isin(single_cluster_list)])
+    single_df = pd.DataFrame(np.concatenate(output_single))
+    single_df= single_df.rename(columns={0:"cluster", 1:"FileName", 2:"images", 3:"socialmedia", 4:"URL", 5:"SocialMedia", 6:"BoardName", 7:"group", 8:"hashtags", 9:"UserName", 10:"TimeStamp", 11:"date", 12:"time"})
+    single_df.to_csv("single_platforms.csv", index=False)
+
+    multi_cluster_list = multi_platforms.index.values.tolist()
+    output_multi = []
+    output_multi.append(dataframe.loc[dataframe['cluster'].isin(multi_cluster_list)])
+    multi_df = pd.DataFrame(np.concatenate(output_multi))
+    multi_df = multi_df.rename(
+        columns={0: "cluster", 1: "FileName", 2: "images", 3: "socialmedia", 4: "URL", 5: "SocialMedia", 6: "BoardName",
+                 7: "group", 8: "hashtags", 9: "UserName", 10: "TimeStamp", 11: "date", 12: "time"})
+
+    multi_df.to_csv("multi_platforms.csv", index=False)
+
+    return multi_df
 
 def metadata_merge(df, merge_file):
     df_merge = pd.read_csv(merge_file)
@@ -81,8 +97,20 @@ def date_check(df):
     print("Checking if there are any invalid or missing dates...")
     print("There are " + str(df2) + " files missing dates.")
 
-# def remove_clusters(df):
-#
+def remove_clusters(df):
+    cluster_list = input("Enter the cluster numbers that you would like to remove: ")
+    try:
+        cluster_list = []
+        while True:
+            cluster_list.append(int(input()))
+    except:
+        print(cluster_list)
+
+    for i in cluster_list:
+        df.drop(df[df['cluster'] == i].index, inplace=True)
+
+    return df
+
 
 def main():
     # file_path = input("Let's get started. Add the filepath of your clustering_output.txt here:")
@@ -97,9 +125,13 @@ def main():
         merge_file = '/Volumes/Elsa_HD2/Memes/data/All-Metadata/all_metadata.csv'
         pd_dataframe = metadata_merge(pd_dataframe, merge_file)
 
-    filter = input("Would you like to filter out for only multi-platform clusters? (Yes/No)")
+    filter = input("Would you like to filter out for only multi-platform clusters? (Yes/No) ")
     if filter == 'Yes':
         pd_dataframe = multiplatform_filter(pd_dataframe)
+
+    rm_clusters = input("Would you like to remove specific cluster(s) from the data? (Yes/No) ")
+    if rm_clusters == 'Yes':
+        pd_dataframe = remove_clusters(pd_dataframe)
 
     date_check(pd_dataframe)
 
