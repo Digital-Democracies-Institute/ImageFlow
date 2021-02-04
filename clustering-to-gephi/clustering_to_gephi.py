@@ -98,8 +98,10 @@ def date_check(df):
     print("There are " + str(df2) + " files missing dates.")
 
     rm_dates = input("Would you like to remove files with missing dates? (Yes/No) ")
+    print("Remove dates is " + rm_dates)
     if rm_dates == 'Yes':
 
+        print("Removing dates...")
         df = pd.DataFrame(df)
         no_date_df = df[df['date'].isnull()]
         no_date_df = pd.DataFrame(no_date_df)
@@ -110,7 +112,10 @@ def date_check(df):
         df = df[df['date'].notna()]
         print(df)
 
+        print("Multiplatform is on " + filter)
+
         if filter == 'Yes':
+
             print("Automatically re-checking for presence of single-platform clusters due to recently deleted rows...")
             df = multiplatform_filter(df)
 
@@ -171,7 +176,6 @@ def remove_retweets(df):
         orig_hashtags = row['hashtags']
         next_hashtags = row['next_hashtags']
 
-        #TODO: This is not working for some reason
         if orig_cluster == next_cluster and orig_hashtags is not next_hashtags:
             out_count += 1
             row = {"cluster": orig_cluster, "FileName": filename, "socialmedia": socialmedia,
@@ -211,6 +215,9 @@ def main():
         merge_file = '/Volumes/Elsa_HD2/Memes/data/All-Metadata/all_metadata.csv'
         pd_dataframe = metadata_merge(pd_dataframe, merge_file)
 
+    pd_dataframe = date_check(pd_dataframe)
+
+    global filter
     filter = input("Would you like to filter for only multi-platform clusters? (Yes/No) ")
     if filter == 'Yes':
         pd_dataframe = multiplatform_filter(pd_dataframe)
@@ -220,7 +227,7 @@ def main():
     if rm_clusters == 'Yes':
         pd_dataframe = remove_clusters(pd_dataframe)
 
-    pd_dataframe = date_check(pd_dataframe)
+    #pd_dataframe = date_check(pd_dataframe)
 
 
     rm_retweets = input("Would you like to remove twitter retweets from the data? (Yes/No) ")
