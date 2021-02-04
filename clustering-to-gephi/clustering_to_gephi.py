@@ -172,11 +172,10 @@ def remove_retweets(df):
         username = str(row['UserName'])
         datetime = str(row['datetime'])
 
-
         orig_hashtags = row['hashtags']
         next_hashtags = row['next_hashtags']
 
-        if orig_cluster == next_cluster and orig_hashtags is not next_hashtags:
+        if orig_cluster == next_cluster and orig_hashtags is not next_hashtags or socialmedia != "twitter":
             out_count += 1
             row = {"cluster": orig_cluster, "FileName": filename, "socialmedia": socialmedia,
                    "platform_with_groups": platform_groups, "hashtags": orig_hashtags, "UserName": username,
@@ -227,8 +226,7 @@ def main():
     if rm_clusters == 'Yes':
         pd_dataframe = remove_clusters(pd_dataframe)
 
-    #pd_dataframe = date_check(pd_dataframe)
-
+    pd_dataframe = multiplatform_filter(pd_dataframe)
 
     rm_retweets = input("Would you like to remove twitter retweets from the data? (Yes/No) ")
     if rm_retweets == 'Yes':
