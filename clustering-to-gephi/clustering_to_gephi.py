@@ -122,7 +122,7 @@ def date_check(df):
     return df
 
 def remove_clusters(df):
-    cluster_list = input("Enter the cluster numbers that you would like to remove: ")
+    print("Enter the cluster numbers that you would like to remove: ")
     try:
         cluster_list = []
         while True:
