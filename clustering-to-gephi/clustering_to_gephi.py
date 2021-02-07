@@ -122,18 +122,61 @@ def date_check(df):
     return df
 
 def remove_clusters(df):
-    print("Enter the cluster numbers that you would like to remove: ")
-    try:
-        cluster_list = []
-        while True:
-            cluster_list.append(int(input()))
-    except:
-        print(cluster_list)
+    # print("Enter the cluster numbers that you would like to remove: ")
+    # try:
+    #     cluster_list = []
+    #     while True:
+    #         cluster_list.append(int(input()))
+    # except:
+    #     print(cluster_list)
+    #
+    cluster_list = [3736, 7614, 2337, 3277, 468, 1928, 2973, 5992, 6828, 1357, 2765, 4142, 5398, 5647, 6365, 6442, 6876, 8356, 8416]
 
     for i in cluster_list:
         df.drop(df[df['cluster'] == i].index, inplace=True)
 
     return df
+
+def directional_gephi(df):
+    df['next_cluster'] = df.cluster.shift(-1, fill_value=0)
+    df['next_socialmedia'] = df.platform_with_groups.shift(-1)
+
+    # for if cluster is the same and social media changes: add 1 weight.
+    output = []
+
+    count = 0
+    out_count = 0
+    for index, row in df.iterrows():
+        count += 1
+        orig_cluster = int(row['cluster'])
+        next_cluster = int(row['next_cluster'])
+
+        orig_social = row['platform_with_groups']
+        next_social = row['next_socialmedia']
+
+        if orig_cluster == next_cluster and orig_social is not next_social:
+            out_count += 1
+            row = {"cluster": orig_cluster, "source": orig_social, "target": next_social, "weight": "1"}
+            try:
+                output.append(row)
+            except Exception as ex1:
+                print("unable to append to output")
+        elif orig_cluster != next_cluster:
+            print("Changing to the next cluster from " + str(orig_cluster) + " to " + str(next_cluster))
+
+    df = pd.DataFrame(output)
+
+    df.to_csv('final_gephi.csv', index=False)
+
+    # Adding weight sums together
+    source_file = "final_gephi.csv"
+
+    df = pd.read_csv(source_file)
+
+    df_sum = df.groupby(['source', 'target']).sum()
+
+    df_sum.to_csv('final_gephi_sum.csv')
+
 
 def remove_retweets(df):
     print("Removing Twitter retweets...")
@@ -200,6 +243,9 @@ def remove_retweets(df):
     print(df2)
     return df2
 
+def groupby(df):
+    df = df.groupby(['cluster']).size()
+    df.to_csv('final_groupby.csv')
 
 def main():
     # file_path = input("Let's get started. Add the filepath of your clustering_output.txt here:")
@@ -234,7 +280,11 @@ def main():
 
     pd_dataframe.to_csv("final.csv", index=False)
 
+    gephi = input("Would you like to create a gephi-formatted csv? (Yes/No) ")
+    if gephi == 'Yes':
+        directional_gephi(pd_dataframe)
 
+    groupby(pd_dataframe)
 
 if __name__ == "__main__":
     main()
