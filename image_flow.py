@@ -7,7 +7,6 @@ import os
 import sys
 sys.path.append('../../')
 from phash import phash
-<<<<<<< HEAD
 from pairwise_comparisons import pairwise_comparisons
 from clustering import clustering
 from visualize import visualize
