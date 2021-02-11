@@ -9,6 +9,7 @@ import queue
 import itertools
 import imagehash # used to create the hash
 from PIL import Image # for openning and greyscaling the images
+import copy
 
 
 class phash():
@@ -56,7 +57,8 @@ class phash():
                     # this version uses greyscale to remove colors!
                     image_phash = imagehash.phash(Image.open(line).convert('LA'))
 
-                out_list.append(str(line) + '\t' + str(image_phash))
+                out_list.append([str(line), str(image_phash)])
+
             except Exception as e:
                 print(str(e))
                 pass
@@ -88,13 +90,14 @@ class phash():
                 p.join()
 
             # lets write the results to our output_path
+            final = []
             print("Done. Writing to file %d phashes" %(len(results)))
             output = open(self.output_path, 'w')
             for result in results:
-                output.write(result + '\n')
+                final.append(result)
+                output.write(result[0] + '\t' + result[1] + '\n')
             output.close()
-
-            return True
+            return final
 
 
 # if __name__ == '__main__':
