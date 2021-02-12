@@ -15,7 +15,7 @@ import time
 
 class image_flow():
     output_path = "/data"
-    input_path = "/Users/hedayattabesh/Documents/Data/raw data/final_dataset/"
+    input_path = "/Users/hedayattabesh/Documents/Data/raw data/final_dataset/facebook"
     identical = False
     num_workers = 4
     

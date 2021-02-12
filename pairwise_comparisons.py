@@ -42,52 +42,92 @@ class pairwise_comparisons():
         print('[i] processed', len(phashes))
         return phashes
     
-    def calculate_diff(self, phashes, shared_list):
+    def calculate_diff(self, phashes, shared_list, input_queue):
         distance_matrix = np.empty(shape=(len(phashes),len(phashes)))
-        for i, item_i in enumerate(phashes):
+        # for i, item_i in enumerate(phashes):
+        while True:
+            # if input_queue.empty():
+            #     break
+            try:
+                curr_i = input_queue.get(block=False)
+            except:
+                break
+            print(curr_i)
             # set itself to 0
-            distance_matrix[i,i] = 0
+            distance_matrix[curr_i,curr_i] = 0
             # now lets compare it to every other image!
-            j = i+1
+            j = curr_i+1
             while j < len(phashes):
-                ham_dist = distance.hamming(item_i, phashes[j])
-                distance_matrix[i,j] = ham_dist
-                distance_matrix[j,i] = ham_dist
+                # print(phashes[curr_i][1])
+                # print(phashes[j][1])
+                ham_dist = distance.hamming(phashes[curr_i][1], phashes[j][1])
+                distance_matrix[curr_i,j] = ham_dist
+                distance_matrix[j,curr_i] = ham_dist
                 j = j + 1
-
+            
         shared_list.append(distance_matrix)
         # return distance_matrix
 
+
+    # def calculate_diff_i(self, phashes, shared_list):
+    #     distance_matrix = np.empty(shape=(len(phashes),len(phashes)))
+    #     for i, item_i in enumerate(phashes):
+    #         # set itself to 0
+    #         print(i)
+    #         distance_matrix[i,i] = 0
+    #         # now lets compare it to every other image!
+    #         j = i+1
+    #         while j < len(phashes):
+    #             ham_dist = distance.hamming(item_i, phashes[j])
+    #             distance_matrix[i,j] = ham_dist
+    #             distance_matrix[j,i] = ham_dist
+    #             j = j + 1
+
+    #     shared_list.append(distance_matrix)
+
     def compare(self, phashes=None):
         if phashes == None:
-            phashes = self.read_phashes_manifest()
+            phashes = self.read_phashes_manifest()[:100000]
 
-        print(len(phashes))
-        # lets split the Phashes to component peices for multi-processing
-        # print(phashes[0])
-        # print(phashes[0][1])
+        # print(len(phashes))
         phash_len = len(phashes[0][1])
         str_size = math.floor(phash_len/self.num_threads)
 
-        # distance_matrix = self.calculate_diff(phashes)
-        manager = multiprocessing.Manager()
-        return_list = manager.list()
-        procs = []
-        for i in range(0, phash_len, str_size):
-            if i+str_size > phash_len:
-                str_size = len(phashes[0][i:])
+        # manager = multiprocessing.Manager()
+        # return_list = manager.list()
+        # procs = []
+        # for i in range(0, phash_len, str_size):
+        #     if i+str_size > phash_len:
+        #         str_size = len(phashes[0][i:])
 
-            temp_phash = []
-            for item in phashes:
-                temp_phash.append(item[1][i:i+str_size])
+        #     temp_phash = []
+        #     for item in phashes:
+        #         temp_phash.append(item[1][i:i+str_size])
             
 
-            proc = multiprocessing.Process(target=self.calculate_diff, args=(temp_phash, return_list))
+        #     proc = multiprocessing.Process(target=self.calculate_diff_i, args=(temp_phash, return_list))
+        #     proc.start()
+        #     procs.append(proc)
+        
+        # for proc in procs:
+        #     proc.join()
+
+        manager = multiprocessing.Manager()
+        return_list = manager.list()
+        input_queue = manager.Queue()
+        procs = []
+        for i in range(len(phashes)):
+            input_queue.put(i) 
+        
+        for i in range(self.num_threads):
+            proc = multiprocessing.Process(target=self.calculate_diff, args=(phashes, return_list, input_queue))
             proc.start()
             procs.append(proc)
         
         for proc in procs:
             proc.join()
+
+        print("done")
 
         distance_matrix = return_list[0]
         for item in return_list[1:]:
