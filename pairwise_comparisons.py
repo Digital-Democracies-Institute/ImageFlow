@@ -10,7 +10,6 @@ import time
 import threading
 import pickle
 
-import tensorflow as tf
 import numpy as np
 import sys
 import distance
@@ -18,14 +17,15 @@ import json
 import math
 import multiprocessing 
 
+from scipy.sparse import csr_matrix
+
 class pairwise_comparisons():
     input_path = "data/phashes_full.txt"
     output_dir = "data/"
     output_path = output_dir + "phashes-diffs.json"
     identical = False
-    num_threads = 1
+    num_threads = 6
     DISTANCE_THRESHOLD = 0
-    # FLAGS = tf.app.flags.FLAGS
 
     def __init__(self, input_p="", output_p=""):
         pass
@@ -44,28 +44,30 @@ class pairwise_comparisons():
     
     def calculate_diff(self, phashes, shared_list, input_queue):
         distance_matrix = np.empty(shape=(len(phashes),len(phashes)))
+        # distance_matrix = csr_matrix((len(phashes),len(phashes)), dtype=np.int)
         # for i, item_i in enumerate(phashes):
+        output = {}
         while True:
-            # if input_queue.empty():
-            #     break
             try:
                 curr_i = input_queue.get(block=False)
             except:
                 break
             print(curr_i)
-            # set itself to 0
-            distance_matrix[curr_i,curr_i] = 0
             # now lets compare it to every other image!
             j = curr_i+1
             while j < len(phashes):
                 # print(phashes[curr_i][1])
                 # print(phashes[j][1])
                 ham_dist = distance.hamming(phashes[curr_i][1], phashes[j][1])
-                distance_matrix[curr_i,j] = ham_dist
-                distance_matrix[j,curr_i] = ham_dist
+                if ham_dist <= self.DISTANCE_THRESHOLD:
+                # distance_matrix[curr_i,j] = ham_dist
+                # distance_matrix[j,curr_i] = ham_dist
+                    key = phashes[curr_i][0] + "-" + phashes[j][0]
+                    output[key] = ham_dist
                 j = j + 1
             
-        shared_list.append(distance_matrix)
+        # shared_list.append(distance_matrix)
+        shared_list.append(output)
         # return distance_matrix
 
 
@@ -87,7 +89,7 @@ class pairwise_comparisons():
 
     def compare(self, phashes=None):
         if phashes == None:
-            phashes = self.read_phashes_manifest()[:100000]
+            phashes = self.read_phashes_manifest()
 
         # print(len(phashes))
         phash_len = len(phashes[0][1])
@@ -129,22 +131,30 @@ class pairwise_comparisons():
 
         print("done")
 
-        distance_matrix = return_list[0]
+        final_json = return_list[0]
         for item in return_list[1:]:
-            distance_matrix = np.add(distance_matrix, item)
+            # distance_matrix = np.add(distance_matrix, item)
+            final_json.update(item)
+        
+        # final_json = {}
+        # for item in distance_matrix_values:
+        #     final_json[item[0]] = item[1]
 
+        print(return_list)
+        print(final_json)
+        
         # print(distance_matrix)
 
-        # now we need to check if its below threshold! If so then lets save it into our clustering file!
-        # format will be a json with key value bing the image1-image2 and the value is its distance
-        final_json = {}
-        for i, item_i in enumerate(distance_matrix):
-            # need to check if any numbers beat the threshold
-            for j, item_j in enumerate(item_i):
-                if item_j <= self.DISTANCE_THRESHOLD:
-                    if not phashes[i][0] == phashes[j][0]:
-                        key = phashes[i][0] + "-" + phashes[j][0]
-                        final_json[key] = item_j
+        # # now we need to check if its below threshold! If so then lets save it into our clustering file!
+        # # format will be a json with key value bing the image1-image2 and the value is its distance
+        # final_json = {}
+        # for i, item_i in enumerate(distance_matrix):
+        #     # need to check if any numbers beat the threshold
+        #     for j, item_j in enumerate(item_i):
+        #         if item_j <= self.DISTANCE_THRESHOLD:
+        #             if not phashes[i][0] == phashes[j][0]:
+        #                 key = phashes[i][0] + "-" + phashes[j][0]
+        #                 final_json[key] = item_j
 
         with open(self.output_path, 'w') as outfile:
             json.dump(final_json, outfile)
