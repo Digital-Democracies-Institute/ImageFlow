@@ -24,7 +24,7 @@ class pairwise_comparisons():
     output_dir = "data/"
     output_path = output_dir + "phashes-diffs.json"
     identical = False
-    num_threads = 6
+    num_avail_proc = 6
     DISTANCE_THRESHOLD = 0
 
     def __init__(self, input_p="", output_p=""):
@@ -43,7 +43,6 @@ class pairwise_comparisons():
         return phashes
     
     def calculate_diff(self, phashes, shared_list, input_queue):
-        distance_matrix = np.empty(shape=(len(phashes),len(phashes)))
         # distance_matrix = csr_matrix((len(phashes),len(phashes)), dtype=np.int)
         # for i, item_i in enumerate(phashes):
         output = {}
@@ -69,59 +68,62 @@ class pairwise_comparisons():
         # shared_list.append(distance_matrix)
         shared_list.append(output)
         # return distance_matrix
+    
+    def calculate_diff_test(self, shared_list, input_queue):
+        output = {}
+        while True:
+            try:
+                curr_i = input_queue.get()
+            except:
+                break
+            print(input_queue.qsize())
+            ham_dist = distance.hamming(curr_i[1][0], curr_i[1][1])
+            if ham_dist <= self.DISTANCE_THRESHOLD:
+                output[curr_i[0]] = ham_dist
+            
+        # shared_list.append(distance_matrix)
+        shared_list.append(output)
+        # return distance_matrix
 
 
-    # def calculate_diff_i(self, phashes, shared_list):
-    #     distance_matrix = np.empty(shape=(len(phashes),len(phashes)))
-    #     for i, item_i in enumerate(phashes):
-    #         # set itself to 0
-    #         print(i)
-    #         distance_matrix[i,i] = 0
-    #         # now lets compare it to every other image!
-    #         j = i+1
-    #         while j < len(phashes):
-    #             ham_dist = distance.hamming(item_i, phashes[j])
-    #             distance_matrix[i,j] = ham_dist
-    #             distance_matrix[j,i] = ham_dist
-    #             j = j + 1
+    def fill_queue(self, input_queue, phashes, proc_i):
+        tot_len = int(len(phashes)/self.num_avail_proc)
+        start = int(proc_i*tot_len)
+        last = int(((proc_i+1)*tot_len))
+        if proc_i+1 == self.num_avail_proc:
+            last = int(len(phashes))
 
-    #     shared_list.append(distance_matrix)
+        for i in range(start ,last):
+            print("starting to insert the " +str(i))
+            j = i+1
+            while j < len(phashes):
+                input_queue.put([phashes[i][0] + "-" + phashes[j][0], [phashes[i][1], phashes[j][1]]])
+                j = j + 1
 
     def compare(self, phashes=None):
         if phashes == None:
-            phashes = self.read_phashes_manifest()
+            phashes = self.read_phashes_manifest()[:10000]
 
-        # print(len(phashes))
-        phash_len = len(phashes[0][1])
-        str_size = math.floor(phash_len/self.num_threads)
+        manager = multiprocessing.Manager()
+        return_list = manager.list()
+        input_queue = manager.Queue()
+        
+        for i in range(len(phashes)):
+            input_queue.put(i)
+        
 
-        # manager = multiprocessing.Manager()
-        # return_list = manager.list()
+        # lets prep queue
         # procs = []
-        # for i in range(0, phash_len, str_size):
-        #     if i+str_size > phash_len:
-        #         str_size = len(phashes[0][i:])
-
-        #     temp_phash = []
-        #     for item in phashes:
-        #         temp_phash.append(item[1][i:i+str_size])
-            
-
-        #     proc = multiprocessing.Process(target=self.calculate_diff_i, args=(temp_phash, return_list))
+        # for i in range(self.num_avail_proc):
+        #     proc = multiprocessing.Process(target=self.fill_queue, args=(input_queue, phashes, i))
         #     proc.start()
         #     procs.append(proc)
         
         # for proc in procs:
         #     proc.join()
 
-        manager = multiprocessing.Manager()
-        return_list = manager.list()
-        input_queue = manager.Queue()
         procs = []
-        for i in range(len(phashes)):
-            input_queue.put(i) 
-        
-        for i in range(self.num_threads):
+        for i in range(self.num_avail_proc):
             proc = multiprocessing.Process(target=self.calculate_diff, args=(phashes, return_list, input_queue))
             proc.start()
             procs.append(proc)
@@ -133,28 +135,7 @@ class pairwise_comparisons():
 
         final_json = return_list[0]
         for item in return_list[1:]:
-            # distance_matrix = np.add(distance_matrix, item)
             final_json.update(item)
-        
-        # final_json = {}
-        # for item in distance_matrix_values:
-        #     final_json[item[0]] = item[1]
-
-        print(return_list)
-        print(final_json)
-        
-        # print(distance_matrix)
-
-        # # now we need to check if its below threshold! If so then lets save it into our clustering file!
-        # # format will be a json with key value bing the image1-image2 and the value is its distance
-        # final_json = {}
-        # for i, item_i in enumerate(distance_matrix):
-        #     # need to check if any numbers beat the threshold
-        #     for j, item_j in enumerate(item_i):
-        #         if item_j <= self.DISTANCE_THRESHOLD:
-        #             if not phashes[i][0] == phashes[j][0]:
-        #                 key = phashes[i][0] + "-" + phashes[j][0]
-        #                 final_json[key] = item_j
 
         with open(self.output_path, 'w') as outfile:
             json.dump(final_json, outfile)
