@@ -40,7 +40,7 @@ class image_flow():
         return self.pc.compare(phashes)
 
     # step #3: clustering_phashes.py
-    def calculate_clusters(self, phashes, phashes_diff):
+    def calculate_clusters(self, phashes, phashes_diff=None):
         return self.clus.cluster(phashes, phashes_diff)
 
     # step #4: python visualize_clusters_dup.py
@@ -54,10 +54,10 @@ if __name__ == '__main__':
     imfl = image_flow()
     # print("Calculating Phashes")
     # phashes = imfl.calculate_phashes()
-    print("Calculating phashes_diff")
-    phashes_diff = imfl.calculate_pairwise_comparisons()
-    # print("Calculating clusters")
-    # clusters = imfl.calculate_clusters(phashes, phashes_diff)
+    # print("Calculating phashes_diff")
+    # phashes_diff = imfl.calculate_pairwise_comparisons()
+    print("Calculating clusters")
+    clusters = imfl.calculate_clusters("data/phashes.txt")
 
     end = time.time()
     elapsed_time = end - start

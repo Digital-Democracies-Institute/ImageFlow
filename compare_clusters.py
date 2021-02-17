@@ -3,8 +3,8 @@ import json
 
 
 
-input_path_o = "data/clustering_output_o.txt"
-input_path_n = "data/clustering_output_n.txt"
+input_path_o = "data/clustering_output_full_o.txt"
+input_path_n = "data/clustering_output_full_n.txt"
 
 
 cluster_json_o = []

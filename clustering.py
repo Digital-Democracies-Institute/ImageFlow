@@ -45,7 +45,7 @@ class clustering():
     # runs based on loaded data on all_images, ham_dist, phashes_dict, image_index
     def create_distance_matrix(self):
         n = len(self.all_images)
-        distance_matrix = csr_matrix((n, n))
+        distance_matrix = lil_matrix((n, n))
         for pair in self.ham_dist.keys():
             image1, image2 = self.extract_pairs(pair, self.phashes_dict)
             distance = self.ham_dist[pair]
@@ -55,7 +55,7 @@ class clustering():
             index2 = self.image_index[image2]
             distance_matrix[index1, index2] = distance
             distance_matrix[index2, index1] = distance
-        distance_matrix.sort_indices()
+        # distance_matrix.sort_indices()
         return distance_matrix
 
     # loads the phashes.txt into a dictionary
@@ -170,7 +170,7 @@ class clustering():
         # to avoid memory issues)
         distance_matrix = self.create_distance_matrix()
         
-        print(distance_matrix)
+        # print(distance_matrix)
         clustering = DBSCAN(eps=self.CLUSTERING_THRESHOLD, metric='precomputed', n_jobs=8, min_samples=self.CLUSTERING_MIN_SAMPLES).fit(distance_matrix)
         num_clusters = len(dict(Counter(clustering.labels_)).keys())
         print("Number of clusters  = %d " %(num_clusters-1))
