@@ -46,7 +46,7 @@ def convert_to_df(file_path):
 
     pd_dataframe = pd.DataFrame(output)
     pd_dataframe = pd_dataframe.drop_duplicates(subset='images')
-    pd_dataframe.to_csv("clustering.csv")
+    #pd_dataframe.to_csv("clustering.csv")
     return(pd_dataframe)
 
 def multiplatform_filter(dataframe):
@@ -57,6 +57,8 @@ def multiplatform_filter(dataframe):
     single_platforms = df[df['size'] == 1]
     multi_platforms = df[df['size'] > 1]
 
+
+    #TODO: Append to single_platforms.csv if the file exists.
     single_platforms = pd.DataFrame(single_platforms)
     multi_platforms = pd.DataFrame(multi_platforms)
     single_cluster_list = single_platforms.index.values.tolist()
@@ -88,12 +90,12 @@ def metadata_merge(df, merge_file):
     print("Merging at the filename...")
     output = output[output['socialmedia'].notna()]
     output = output.drop_duplicates(subset='images')
-    output.to_csv("merge.csv")
+    #output.to_csv("merge.csv")
     print(output)
     return output
 
 def date_check(df):
-    df2 = df['date'].isnull().values.sum()
+    df2 = df['datetime'].isnull().values.sum()
     print("Checking if there are any invalid or missing dates...")
     print("There are " + str(df2) + " files missing dates.")
 
@@ -103,13 +105,13 @@ def date_check(df):
 
         print("Removing dates...")
         df = pd.DataFrame(df)
-        no_date_df = df[df['date'].isnull()]
+        no_date_df = df[df['datetime'].isnull()]
         no_date_df = pd.DataFrame(no_date_df)
         no_date_df.to_csv("removed_rows_with_no_date.csv", index=False)
         print("The no_date_df")
         print(no_date_df)
 
-        df = df[df['date'].notna()]
+        df = df[df['datetime'].notna()]
         print(df)
 
         print("Multiplatform is on " + filter)
@@ -137,9 +139,19 @@ def remove_clusters(df):
 
     return df
 
+def memes_filter(df):
+    not_memes_list = [2926, 2166, 1754, 1889, 2209, 2446, 3858, 4317, 6876, 23, 6, 114, 60, 206, 507, 282, 76, 267, 324, 153, 886, 13, 735, 385, 1182, 817, 2283, 194, 469, 1004, 630, 200, 257, 963, 786, 591, 730, 1950, 77, 292, 489, 700, 632, 940, 1360, 351, 3736, 231, 819, 19, 320, 3814, 56, 562, 1319, 5491, 444, 678, 4174, 1442, 4618, 301, 946, 1299, 1795, 2998, 3516, 3349, 4045, 445, 1447, 1864, 2703, 3620, 4416, 615, 984, 1152, 2898, 2947, 3419, 659, 1536, 2128, 3267, 3694, 3928, 5152, 5538, 105, 3127, 3312, 3653, 3677, 3945, 3991, 4818, 5809, 7059, 944, 1900, 2007, 2341, 3360, 4446, 277, 1243, 2099, 2747, 3070, 3087, 4089, 4413, 4453, 4680, 4917, 5129, 5580, 5619, 5669, 7040, 7367, 7379, 7765, 1015, 1042, 1091, 1690, 1839, 1902, 1928, 1935, 2031, 2042, 2098, 2726, 2827, 2993, 3133, 3166, 3175, 3490, 3545, 3808, 3822, 4108, 4125, 4177, 4284, 4399, 4782, 5447, 5541, 6100, 6117, 6240, 6562, 6739, 7075, 7220, 7504, 7550, 7645, 7892, 7920, 482, 580, 688, 719, 1024, 1394, 1557, 1582, 1603, 1605, 1622, 1658, 1808, 1978, 1992, 2054, 2102, 2108, 2239, 2281, 2469, 2673, 2732, 2765, 2800, 2975, 3172, 3224, 3276, 3301, 3308, 3503, 3650, 3927, 4052, 4117, 4198, 4204, 4206, 4207, 4217, 4384, 4508, 4623, 4712, 4714, 4786, 4798, 4899, 4906, 5021, 5040, 5213, 5342, 5362, 5409, 5431, 5462, 5470, 5674, 5693, 5854, 5881, 5966, 6006, 6008, 6041, 6057, 6114, 6206, 6393, 6467, 6578, 6629, 6693, 6718, 6719, 6756, 6827, 6906, 6944, 6955, 6957, 7010, 7081, 7199, 7219, 7227, 7317, 7334, 7342, 7369, 7399, 7471, 7492, 7493, 7548, 7595, 7638, 7689, 7774, 7819, 7919, 7991, 8008, 8079, 8099, 8127, 8232, 8269, 8329, 8331, 8360, 8361, 8385, 8410, 8416, 8483, 8486, 8487, 8491, 8508, 3104]
+
+    for i in not_memes_list:
+        df.drop(df[df['cluster'] == i].index, inplace=True)
+
+    return df
+
+
 def directional_gephi(df):
     df['next_cluster'] = df.cluster.shift(-1, fill_value=0)
     df['next_socialmedia'] = df.platform_with_groups.shift(-1)
+    df['next_platform'] = df.socialmedia.shift(-1)
 
     # for if cluster is the same and social media changes: add 1 weight.
     output = []
@@ -151,18 +163,25 @@ def directional_gephi(df):
         orig_cluster = int(row['cluster'])
         next_cluster = int(row['next_cluster'])
 
+        orig_platform = row['socialmedia']
+        next_platform = row['next_platform']
+
         orig_social = row['platform_with_groups']
         next_social = row['next_socialmedia']
 
-        if orig_cluster == next_cluster and orig_social is not next_social:
+
+        #if orig_cluster == next_cluster and orig_social is not next_social:
+        if orig_cluster == next_cluster and orig_platform is not next_platform:
             out_count += 1
-            row = {"cluster": orig_cluster, "source": orig_social, "target": next_social, "weight": "1"}
+            #row = {"cluster": orig_cluster, "source": orig_social, "platform":orig_platform, "target": next_social, "next_platform":next_platform, "weight": "1"}
+            row = {"cluster": orig_cluster, "source": orig_platform, "target": next_platform, "weight": "1"}
             try:
                 output.append(row)
             except Exception as ex1:
                 print("unable to append to output")
         elif orig_cluster != next_cluster:
-            print("Changing to the next cluster from " + str(orig_cluster) + " to " + str(next_cluster))
+            #print("Changing to the next cluster from " + str(orig_cluster) + " to " + str(next_cluster))
+            continue
 
     df = pd.DataFrame(output)
 
@@ -171,17 +190,22 @@ def directional_gephi(df):
     # Adding weight sums together
     source_file = "final_gephi.csv"
 
-    df = pd.read_csv(source_file)
+    #TODO: Not working
+    #df2 = pd.read_csv(source_file)
 
-    df_sum = df.groupby(['source', 'target']).sum()
-
-    df_sum.to_csv('final_gephi_sum.csv')
+    # df_sum = df2.groupby(['source', 'target']).sum()
+    #
+    # df_sum.to_csv('final_gephi_sum.csv')
 
 
 def remove_retweets(df):
     print("Removing Twitter retweets...")
+    print("Before removal of Retweets")
+    print(df)
 
     df['group'] = df['group'].fillna(df['hashtags'])
+    # print("after removal of twitter with no hashtags:")
+    # print(df)
 
     df = pd.DataFrame(df)
 
@@ -240,16 +264,22 @@ def remove_retweets(df):
     print("count is " + str(out_count))
     df2 = pd.DataFrame(output)
     df2 = df2.sort_values(["cluster", "datetime"], ascending=[True, True])
+    print("AFTER REMOVAL OF RETWEETS")
     print(df2)
+    #os.remove(CsvFile)
     return df2
 
 def groupby(df):
-    df = df.groupby(['cluster']).size()
+    df2 = df.groupby(['cluster']).size()
+    df2.to_csv('final_groupby_count.csv')
+
+    df = df.drop_duplicates(["cluster", "socialmedia"])
+    df = df.groupby(['cluster']).agg(lambda x: x.tolist())
     df.to_csv('final_groupby.csv')
 
 def main():
-    # file_path = input("Let's get started. Add the filepath of your clustering_output.txt here:")
-    # alternative to manually add file_path here and not use UI
+    ##file_path = input("Let's get started. Add the filepath of your clustering_output.txt here:")
+    ##alternative to manually add file_path here and not use UI
     file_path = "clustering_output_identicals.txt"
     pd_dataframe = convert_to_df(file_path)
     print(pd_dataframe)
@@ -262,29 +292,45 @@ def main():
 
     pd_dataframe = date_check(pd_dataframe)
 
+    pd_dataframe.to_csv("original_postMerge.csv")
     global filter
     filter = input("Would you like to filter for only multi-platform clusters? (Yes/No) ")
     if filter == 'Yes':
         pd_dataframe = multiplatform_filter(pd_dataframe)
         print(pd_dataframe)
 
+
     rm_clusters = input("Would you like to remove specific cluster(s) from the data? (Yes/No) ")
     if rm_clusters == 'Yes':
         pd_dataframe = remove_clusters(pd_dataframe)
 
-    pd_dataframe = multiplatform_filter(pd_dataframe)
+    if filter and rm_clusters:
+        memes = input("Would you like to filter for only memes?")
+        if memes:
+            memes_filter(pd_dataframe)
+  #  pd_dataframe = multiplatform_filter(pd_dataframe)
 
+    # groupby(pd_dataframe)
+
+    #TODO: The remove_retweets needs the dataframe to have an attribute 'datetime'
     rm_retweets = input("Would you like to remove twitter retweets from the data? (Yes/No) ")
     if rm_retweets == 'Yes':
         pd_dataframe = remove_retweets(pd_dataframe)
 
     pd_dataframe.to_csv("final.csv", index=False)
+    groupby(pd_dataframe)
 
     gephi = input("Would you like to create a gephi-formatted csv? (Yes/No) ")
     if gephi == 'Yes':
         directional_gephi(pd_dataframe)
 
-    groupby(pd_dataframe)
+    # df = pd.read_csv('multiplatform-noretweets-allimages/final.csv')
+    # directional_gephi(df)
+    # df = remove_retweets(df)
+   # df.to_csv("final.csv", index=False)
+    #
+    # groupby(df)
+
 
 if __name__ == "__main__":
     main()
