@@ -8,7 +8,7 @@ import pandas as pd
 
 # Easy conversion for date to UNIX timestamps here: https://www.unixtimestamp.com/index.php
 
-# pushshift.io API
+# Connect to PushShift API
 try:
     api = PushshiftAPI()
 except Exception as ex1:
@@ -17,21 +17,17 @@ except Exception as ex1:
 output = []
 
 #local_path = os.getcwd()
-local_path = "/Volumes/Elsa_HD2/Memes/WallStreetBets/"
+local_path = "cedar/database/reddit"
+
+# USER INPUT SUBREDDIT LIST AND START AND END DATE CONVERTED TO TIMESTAMP
+sub_list = ['canada', 'canadaleft', 'canadapolitics', 'canadapoliticshumour', 'canadianpolitics', 'lpc', 'metacanada', 'ndp', 'onguardforthee', 'piratepartyofcanada']
+
+after = '1567296000' #Sept 1, 2019
+before = '1575158340' #Nov 30, 2019
+
 
 curr_date = str(datetime.date(datetime.now()))
 curr_date = curr_date.replace('-','')
-
-#Add subreddits
-#sub_list = ['canada', 'canadaleft', 'canadapolitics', 'canadapoliticshumour', 'canadianpolitics', 'lpc', 'metacanada', 'ndp', 'onguardforthee', 'piratepartyofcanada']
-sub_list = ['wallstreetbets']
-
-
-#Add timeframe
-after = '1577836800' # January 1, 2020
-#"1567296000" #Sept 1, 2019
-before = '1611792000' #Jan 28, 2021
-    #'1575158340' #Nov 30, 2019
 
 brokenImageLinks = 0
 counter = 0
@@ -76,25 +72,23 @@ for subreddit in sub_list:
                 # ////PUT IN SEPARATE FUNCTION /////
                 unixTime = meme.created_utc
                 timestamp = str(unixTime)
-                convertDate = datetime.fromtimestamp(int(unixTime)).strftime('%Y-%m-%d')
-                convertTime = datetime.fromtimestamp(int(unixTime)).strftime('%H:%M:%S')
-                print("TIMESTAMP: " + timestamp)
-                print(convertDate)
-                print(convertTime)
+                # convertDate = datetime.fromtimestamp(int(unixTime)).strftime('%Y-%m-%d')
+                # convertTime = datetime.fromtimestamp(int(unixTime)).strftime('%H:%M:%S')
+                # print("TIMESTAMP: " + timestamp)
+                # print(convertDate)
+                # print(convertTime)
 
                 # redditScore and NumComments are added as strings not int
                 try:
-                    #command = "exiftool -RedditPostDate=" + convertDate + " -RedditUser=" + meme.author + " -Subreddit=" + subreddit + " -RedditPostTime=" + convertTime + " -RedditScore=" + redditScore + " -RedditNumCmts=" + numCmts + " " + file_name
-                    #os.system(command)
+                    #TODO: instead of exiftool tags create DF with tags
 
                     subprocess.check_call(['exiftool', '-RedditPostDate='+convertDate, '-RedditUser=' + meme.author,
                                            '-Subreddit=' + subreddit, '-RedditPostTime=' + convertTime,
                                            '-RedditScore=' + redditScore, '-RedditNumCmts=' + numCmts, '-TimeStamp=' + timestamp,"-overwrite_original_in_place", file_name])
-                    # shell=True
 
-                except subprocess.CalledProcessError as ex1:
-                    print("OS unix command failed")
-                # //////////////////////////////////
+
+                except Exception as ex1:
+                    print("DF creation failed")
 
 
 
@@ -103,7 +97,7 @@ for subreddit in sub_list:
                 try:
                     #Included to fix issue with downloading imgflip images
                     print("Trying again via Terminal command line...")
-                    #command2 = "wget " + meme.url + " -P " + day_dir
+
                     subprocess.check_call(['wget', meme.url, '-P', day_dir], timeout=60)
 
                     full_url = meme.url
