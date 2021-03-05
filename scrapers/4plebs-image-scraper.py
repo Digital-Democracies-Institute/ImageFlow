@@ -12,6 +12,7 @@ import time
 # CHANGE THESE SETTINGS!
 counter = 0
 total_posts = 0
+output_df = []
 
 # USER INPUTS
 start = "2019-10-14" #Sept 1, 2019
@@ -81,10 +82,8 @@ while current_page != None:
                 filename = df['media.media'][i]
                 group_name = df['board.shortname'][i]
 
-                #instead of a csv add to a new df
-                with open('4chan-metadata.csv', 'a+', newline='') as csv_file:
-                    spamwriter = csv.writer(csv_file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    spamwriter.writerow([filename, image_url, group_name, username, timestamp, country])
+                row = {"FileName": file_name, "Url": image_url, "group": group_name, "timestamp": timestamp, "country":country}
+                output_df.append(row)
 
             except Exception as ex1:
                 print("Could not retrieve info.")
@@ -97,6 +96,9 @@ while current_page != None:
         print("Total posts searched: " + str(total_posts))
 
     current_page += 1
+
+#Output is Pandas Dataframe
+df = pd.DataFrame(output_df)
 
 print("Total posts searched: " + str(total_posts))
 print("Script completed")
