@@ -97,7 +97,7 @@ while current_page != None:
 
     current_page += 1
 
-#Output is Pandas Dataframe
+# Output is Pandas Dataframe
 df = pd.DataFrame(output_df)
 
 print("Total posts searched: " + str(total_posts))

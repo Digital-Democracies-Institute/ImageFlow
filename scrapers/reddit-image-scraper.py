@@ -111,15 +111,12 @@ for subreddit in sub_list:
                     try:
                         #command = "exiftool -RedditPostDate=" + convertDate + " -RedditUser=" + meme.author + " -Subreddit=" + subreddit + " -RedditPostTime=" + convertTime + " -RedditScore=" + redditScore + " -RedditNumCmts=" + numCmts + " " + full_path
 
-                        subprocess.check_call(['exiftool', '-RedditPostDate=' + convertDate, '-RedditUser=' + meme.author,
-                                        '-Subreddit=' + subreddit, '-RedditPostTime=' + convertTime,
-                                        '-RedditScore=' + redditScore, '-RedditNumCmts=' + numCmts, '-TimeStamp=' + timestamp, "-overwrite_original_in_place", full_path])
+                        row = {"FileName": file_name, "Url": meme.url, "group": subreddit, "timestamp": timestamp}
 
-                       # subprocess.call([command])
-                    except subprocess.CalledProcessError as ex1:
-                        print("OS unix command failed")
+                        output_df.append(row)
+                    except Exception as ex1:
+                        print("Dataframe append failed.")
 
-                     #//////////////////////////////////
                 except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as ex2:
                     print("Second attempt to download url failed.")
                     brokenImageLinks+=1
