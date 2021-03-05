@@ -2,7 +2,6 @@ from datetime import datetime
 from psaw import PushshiftAPI
 import wget
 import os
-#import datetime
 import subprocess
 import pandas as pd
 
@@ -15,6 +14,7 @@ except Exception as ex1:
     print("unable to connect to PushShift")
 
 output = []
+output_df = []
 
 #local_path = os.getcwd()
 local_path = "cedar/database/reddit"
@@ -72,23 +72,16 @@ for subreddit in sub_list:
                 # ////PUT IN SEPARATE FUNCTION /////
                 unixTime = meme.created_utc
                 timestamp = str(unixTime)
-                # convertDate = datetime.fromtimestamp(int(unixTime)).strftime('%Y-%m-%d')
-                # convertTime = datetime.fromtimestamp(int(unixTime)).strftime('%H:%M:%S')
-                # print("TIMESTAMP: " + timestamp)
-                # print(convertDate)
-                # print(convertTime)
 
                 # redditScore and NumComments are added as strings not int
                 try:
                     #TODO: instead of exiftool tags create DF with tags
+                    row = {"FileName": file_name, "Url": meme.url, "group": subreddit, "timestamp": timestamp}
 
-                    subprocess.check_call(['exiftool', '-RedditPostDate='+convertDate, '-RedditUser=' + meme.author,
-                                           '-Subreddit=' + subreddit, '-RedditPostTime=' + convertTime,
-                                           '-RedditScore=' + redditScore, '-RedditNumCmts=' + numCmts, '-TimeStamp=' + timestamp,"-overwrite_original_in_place", file_name])
-
+                    output_df.append(row)
 
                 except Exception as ex1:
-                    print("DF creation failed")
+                    print("row creation failed")
 
 
 
@@ -133,7 +126,8 @@ for subreddit in sub_list:
 
             print("\n")
 
-
+    #create DF
+     df = pd.DataFrame(output_df)
     print("...")
 
 print("Total Broken Image Links: "+str(brokenImageLinks))
