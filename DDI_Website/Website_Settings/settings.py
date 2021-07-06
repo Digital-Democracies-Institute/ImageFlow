@@ -163,7 +163,7 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = 'json'
 
-CELERY_BROKER_URL = "sqla+postgresql://" + config.PostgreSQL['UserName'] + ":" + config.PostgreSQL['Password'] + "@localhost:5432/postgres"
+CELERY_BROKER_URL = "sqla+postgresql://" + config.PostgreSQL['UserName'] + ":" + config.PostgreSQL['Password'] + "@" + config.PostgreSQL['Host'] + ":" + str(config.PostgreSQL['Port']) + "/" + config.PostgreSQL['Name']
 BROKER_URL = CELERY_BROKER_URL
 result_backend = 'django-db'
 CELERY_RESULT_BACKEND = result_backend
