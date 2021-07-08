@@ -1,4 +1,4 @@
-I have created a project in Python using PostgreSQL and Celery integrated into Django for an easy to use website interface.
+This is a project in Python using PostgreSQL and Celery integrated into Django for an easy to use website interface.
 
 If you would like to run this server on your local host follow these steps:
 
@@ -57,7 +57,7 @@ Now the website is fully functional!
 Just register a new user and enjoy :)
 
 Author:
-Hedayat Tabesh
-Elsa Donovan
-Pranav Sood
-Jonathan Silveira
+      - Hedayat Tabesh
+      - Elsa Donovan
+      - Pranav Sood
+      - Jonathan Silveira
