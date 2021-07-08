@@ -59,6 +59,9 @@ If you would like to run this server on your local host follow these steps:
         if macOS:
             celery -A Website_Settings worker -l info
 
+8) Finally, start the File Server to help deliver the files to the webserver by going to the File_Server folder and running:
+        python server.py
+
 This will let you run your tasks in the background using Celery
 
 Now the website is fully functional!
