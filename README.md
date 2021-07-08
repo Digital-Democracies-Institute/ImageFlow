@@ -57,6 +57,7 @@ Now the website is fully functional!
 Just register a new user and enjoy :)
 
 Author:
+
       - Hedayat Tabesh
       - Elsa Donovan
       - Pranav Sood
