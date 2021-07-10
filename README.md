@@ -1,4 +1,8 @@
-This is a project in Python using PostgreSQL and Celery integrated into Django for an easy to use website interface.
+I have created a project in Python using Tweepy,PostgreSQL,Celery and integrate all three into Django for an easy to use website interface.
+
+On the website you are able to search for particular users getting upto the most recent 3200 tweets, search via hashtag in the last 7 days using our non-premium or search the full archive of twitter using the premium twitter account
+
+Once data has been searched for, you can query the data on the query tab and get a CSV file containing the tweets and some other useful fields in relation with them.
 
 If you would like to run this server on your local host follow these steps:
 
@@ -25,12 +29,21 @@ If you would like to run this server on your local host follow these steps:
            "Host": "",
            "Port": ,
        }
+
+4) Create a 'backend_config.py' file for our tweepy scripts in Twitter/Local_Library/Twitter_API, of form
+
+       Twitter = {
+           "Consumer_Key": "",
+           "Consumer_Secret": "",
+           "Access_Token": "",
+           "Access_Secret": "",
+       }
         
-4) Go into the DDI directory
+5) Go into the DDI directory
 
         cd DDI_Website
 
-5) Then once the above steps are completed, you now run in order in the terminal:
+6) Then once the above steps are completed, you now run in order in the terminal:
 
         python manage.py makemigrations
         python manage.py migrate
@@ -38,7 +51,7 @@ If you would like to run this server on your local host follow these steps:
         OR  
         python manage.py runmodwsgi // Runs on Apache (final server)
 
-6) Then create a new terminal instance while still in DDI_Website folder
+7) Then create a new terminal instance while still in DDI_Website folder
 
         if windows 10:
             pip install gevent 
@@ -46,19 +59,8 @@ If you would like to run this server on your local host follow these steps:
         if macOS:
             celery -A Website_Settings worker -l info
 
-    note: This will let you run your tasks in the background using Celery
-
-
-7) Finally, start the File Server to help deliver the files to the webserver by going to the File_Server folder and running:
-
-        python server.py
+This will let you run your tasks in the background using Celery
 
 Now the website is fully functional!
+
 Just register a new user and enjoy :)
-
-Author:
-
-      - Hedayat Tabesh
-      - Elsa Donovan
-      - Pranav Sood
-      - Jonathan Silveira

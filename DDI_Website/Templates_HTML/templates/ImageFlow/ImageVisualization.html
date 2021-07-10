@@ -113,6 +113,18 @@
     .attr("x", 0)
     .attr("y", 0)
 
+  //This is the image on the right hidden until updated
+  var img = d3.select("#my_meme")
+    .append("img")
+    .attr("width", "70%")
+    .attr("height", "70%")
+    .attr("object-fit", "cover")
+    .attr("x", 228)
+    .attr("y", 53)
+    .style("opacity", 1)
+    .style("margin", "5%")
+  //.attr("src", "img/0a3qvmntswt31.jpg")
+
   //NON UPDATING TEXT  
   d3.select("#my_meme")
     .append("p")
@@ -202,18 +214,6 @@
     .attr("height", "100%")
     .append("g")
 
-//This is the image on the right hidden until updated
-  var img = d3.select("#my_meme")
-    .append("img")
-    .attr("width", "100%")
-    .attr("height", "100%")
-
-    .attr("object-fit", "cover")
-    .attr("x", 228)
-    .attr("y", 53)
-    .style("opacity", 1)
-  //.attr("src", "img/0a3qvmntswt31.jpg")
-
 
   // X axis for small bar graph
   var xBar = d3.scaleBand()
@@ -238,28 +238,74 @@
   var format = d3.timeParse("%Q");
 
   var formatDate = d3.timeFormat("%d %B %Y")
+  console.log(formatDate);
 
   function getURL() {
         alert("The URL of this page is: " + window.location.href);
     }
 
+//Date and time based on Server's timezone
+d3.json("http://127.0.0.1:8001/ImageFlow/reporting/viz_cleaned_data.json", function(location) {
+        console.log(location)
+  });
+
+  var count = 0;
 
 // add path the visualization folder! 
 // CHANGE PATH WHEN MODE TO DIFFERENT SERVER
   d3.json("http://127.0.0.1:8001/ImageFlow/reporting/viz_cleaned_data.json", function (error, data) {
+
+    console.log("Connected to the json file." + data);
+    
+    // console.log("Cluster is: " + Object.keys).data;
+
     // Get Keys of the json object
     // Itterate through each Cluster
     var xDomainMax = d3.max(Object.keys(data.filename), function (d) {
-      return format(data.datetime[d][data.datetime[d].length - 1])
+
+      //USING TIMESTAMP INSTEAD OF DATETIME
+      //return format(data.datetime[d][data.datetime[d].length - 1])
+      //console.log(format(data.timestamp[d][data.timestamp[d].length - 1]))
+      //format(data.timestamp[data.timestamp[d].length - 1])
+      //console.log("XDomainMax: " +format(data.timestamp[d][data.timestamp[d].length - 1]));
+      //return format(data.timestamp[d][data.timestamp[d].length - 1])
+      return d3.timeDay.offset(format(data.timestamp[d][data.timestamp[d].length - 1]),1)
     });
 
     var xDomainMin = d3.min(Object.keys(data.filename), function (d) {
-      return format(data.datetime[d][0])
+      // console.log(data.datetime[d][0])
+      // return format(data.datetime[d][0])
+      console.log("XDomainMin: " + format(data.timestamp[d][0]));
+      //return format(data.timestamp[d][0])
+      return d3.timeDay.offset(format(data.timestamp[d][0]),-1)
     });
 
+    //TODO: XDOMAIN NOT GETTING PROPERLY CALCULATED!!
     var xDomain = [xDomainMin, xDomainMax]
+    console.log("XDomain: " + xDomain);
 
-    var yDomain = d3.extent(Object.keys(data.filename), function (d) { return data.datetime[d].length - 1; });
+    //TODO: D3.EXTENT not working; changed to min for debugging
+    // var yDomain = d3.max(Object.keys(data.filename), function (d) { 
+    //   //return data.datetime[d].length - 1;
+    //   console.log("Calculating yDomain")
+    //   console.log("yDomain: " + data.timestamp[d].length - 1); 
+    //   return data.timestamp[d].length - 1; 
+    // });
+
+    var yDomainMin = d3.min(Object.keys(data.filename), function (d) { 
+      //return data.timestamp[d].length; 
+      return 2;
+    });  
+
+    // var yDomainMin = 0;
+
+    var yDomainMax = d3.max(Object.keys(data.filename), function (d) { 
+      return data.timestamp[d].length; 
+    });
+ 
+    var yDomain = [yDomainMin-1, yDomainMax+1]
+
+    console.log("yDomain: :" + yDomain);
 
     
     var x = d3.scaleTime()
@@ -269,7 +315,7 @@
     
     var y = d3.scaleLog()
       .domain(yDomain)
-      .range([height, 0])
+      .range([height, 4])
       .base(2)
 
     // Add X axis Y axis
@@ -294,12 +340,12 @@
     //CrossHair lines ID  
     var focus = svg.append('g')
 
-    // // create horizontal line
+    // // create vertical line
     focus.append('line')
       .attr('id', 'focusLineX')
       .attr('class', 'focusLine')
     
-      // // create vertical line
+      // // create horizontal line
     focus.append('line')
       .attr('id', 'focusLineY')
       .attr('class', 'focusLine')
@@ -315,9 +361,10 @@
         var mouse = d3.mouse(this);
 
         d3.select('#focusLineX')
-          .attr('x1', mouse[0]).attr('y1', y(yDomain[0]))
+          .attr('x1', mouse[0]).attr('y1', y(yDomain[0])) //'y1 is NaN'
           .attr('x2', mouse[0]).attr('y2', y(yDomain[1]))
           .attr('pointer-events', "none")
+
 
         d3.select('#focusLineY')
           .attr('x1', x(xDomain[0])).attr('y1', mouse[1])
@@ -344,7 +391,7 @@
           .attr('pointer-events', "none")
       })
 
-
+    //console.log("YDOMAIN FOR FOCUSLINE: " +y(yDomain[0]));
 
     //Scatter plot x axis  
     svg.append("g")
@@ -361,6 +408,8 @@
       .attr("y", height - 15)
       .text("Date");
 
+    console.log(width)
+
     //Scatter plot y axis
     svg.append("g")
       .attr("class", "y axis")
@@ -374,7 +423,7 @@
       .attr("y", 30)
       .attr("dy", "1em")
       .style("text-anchor", "end")
-      .text("Popularity");
+      .text("Number of Images");
 
 
 
@@ -405,10 +454,48 @@
       })
 
       .attr('id', "nodes")
-      .attr("x", function (d) { return (x(format(data.datetime[d][0]))) })
-      .attr("y", function (d) { return (y(format(data.datetime[d].length))) })
-      .attr('width', function (d) { return data.dimensions[d][0].split(" ")[0] / 30 })
-      .attr('height', function (d) { return data.dimensions[d][1].split(" ")[1] / 30 })
+      .attr("x", function (d) { 
+
+        console.log("X: " + x(format(data.timestamp[d][0])));
+
+        // console.log(x(format(data.timestamp[d][0])))
+        // console.log("original timestamp for x: " + x(data.timestamp[d][0]))
+        return (x(format(data.timestamp[d][0])));
+      })
+      .attr("y", function (d) { 
+        //TODO: This should be equal to the number of images in cluster!
+
+        console.log("Y: " + y(format(data.timestamp[d].length)));
+        
+        return (y(format(data.timestamp[d].length))) 
+      })
+      .attr('width', function (d) { 
+        // console.log("DIVIDED WIDTH:" + data.dimensions[d][0].split(" ")[0]/30)
+        // return data.dimensions[d][0].split(" ")[0]
+        var width_rect = data.dimensions[d][0].split(" ")[0]
+        if(width_rect < 250){
+          return data.dimensions[d][1].split(" ")[0]
+        }
+        else {
+          return "150"
+        }
+      })
+      .attr('height', function (d) { 
+        console.log(data.dimensions[d][1].split(" ")[1])
+        var height_rect = data.dimensions[d][1].split(" ")[1]
+        if (height_rect < 250){
+          return data.dimensions[d][1].split(" ")[1]
+        }
+        else{
+          return "150"
+        }
+        
+      })
+      .attr('max-height', function (d) { 
+        return "200"
+      })
+
+
       //.style("fill", function (d) { return data.color[d][0] })
       .style("fill", function(d) {
         
@@ -417,8 +504,7 @@
         
         return genColor(
         
-        Object.keys(data.filename).indexOf(d)
-        ,
+        Object.keys(data.filename).indexOf(d),
         
         Object.keys(data.filename).length
         
@@ -457,8 +543,14 @@
       svg.select("#axis--y").transition(t).call(yAxis);
 
       scatter.selectAll('#nodes').transition(t)
-        .attr("x", function (d) { return (x(format(data.datetime[d][0]))) })
-        .attr("y", function (d) { return (y(format(data.datetime[d].length))) })
+        .attr("x", function (d) { 
+          // return (x(format(data.datetime[d][0]))) 
+          return (x(format(data.timestamp[d][0]))) 
+        })
+        .attr("y", function (d) { 
+          // return (y(format(data.datetime[d].length))) 
+          return (y(format(data.timestamp[d].length))) 
+        })
     }
 
 
@@ -493,9 +585,15 @@
 
     function mouseover(d) {
       //Swaps out image src with link from table
+
+      var filename = data.filename[d][0].replace(/^.*[\\\/]/, '')
       img
-        .attr("src", function (c) { return "img/" + data.filename[d][0] })
+        .attr("src", function (c) { return "http://127.0.0.1:8001/ImageFlow/img/" + data.socialmedia[d][0] + "/" + filename })
         .style("opacity", 1)
+        
+      // img
+      //   .attr("src", function (c) { return "img/" + data.filename[d][0] })
+      //   .style("opacity", 1)
 
       infoC
         .html(d)
@@ -505,7 +603,8 @@
         .style("text-transform", "capitalize")
 
       infoD
-        .html(formatDate(data.datetime[d][0]))
+        .html(formatDate(data.timestamp[d][0]))
+        // .html(formatDate(data.datetime[d][0]))
 
       infoNumCluster
         .html(data.filename[d].length)
@@ -518,9 +617,11 @@
 
       }
 
-      //Updadate the bar graph using the tally and unique values
+      //Update the bar graph using the tally and unique values
       //Eg. 4chan: 4, reddit: 5
-      update(counts, data.color[d][0])
+      console.log("About to update data.color");
+      update(counts, data.color[d][0]);
+      console.log("This is the data.color: " + data.color);
 
 
       //Draws the first value per platform
@@ -535,10 +636,13 @@
             .append('rect')
             .attr('class', "AdditionalPost")
             //.attr('id', "nodes")
-            .attr("x", x(format(data.datetime[d][index])))
-            .attr("y", y(format(data.datetime[d].length)))
-            .attr('width', data.dimensions[d][0].split(" ")[0] / 30)
-            .attr('height', data.dimensions[d][1].split(" ")[1] / 30)
+            // .attr("x", x(format(data.datetime[d][index])))
+            // .attr("y", y(format(data.datetime[d].length)))
+            .attr("x", x(format(data.timestamp[d][index])))
+            .attr("y", y(format(data.timestamp[d].length)))
+            .attr('width', parseInt(data.dimensions[d][0].split(" ")[0]) / 30)
+            .attr('height', parseInt(data.dimensions[d][1].split(" ")[1]) / 30)
+            .attr('max-height', "200px")
             //.style("fill", data.color[d][index])
             .style("fill", genColor(
               
@@ -546,15 +650,18 @@
             
             ))
             .style("opacity", 0.8)
-            .attr('pointer-events', 'none')
-
+            .attr('pointer-events', 'none');          
         }
+
+        
 
         svg
           .append('text')
           .attr('class', "AdditionalPost")
-          .attr("x", x(format(data.datetime[d][index])))
-          .attr("y", y(format(data.datetime[d].length)) + (data.dimensions[d][1].split(" ")[1] / 30) / 2)
+          // .attr("x", x(format(data.datetime[d][index])))
+          // .attr("y", y(format(data.datetime[d].length)) + (data.dimensions[d][1].split(" ")[1] / 30) / 2)
+          .attr("x", x(format(data.timestamp[d][index])))
+          .attr("y", y(format(data.timestamp[d].length)) + (data.dimensions[d][1].split(" ")[1] / 30) / 2)
           //.attr("y", y(format(data.datetime[d].length))+10)
           .text(data.socialmedia[d][index])
           .attr('pointer-events', 'none')
