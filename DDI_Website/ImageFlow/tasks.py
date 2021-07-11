@@ -78,7 +78,7 @@ def ImageGathering(self, startDate , endDate, platform, subReddit, board, Countr
     task_sum = pd.DataFrame(columns=['image_id', 'task_id'])
     task_sum_i = 1
 
-    # lets push the information to the databse
+    # lets push the information to the database
     num_dups = 0
     num_images = 0
 
@@ -102,7 +102,6 @@ def ImageGathering(self, startDate , endDate, platform, subReddit, board, Countr
             num_dups = num_dups + 1
         except ImageSummary.DoesNotExist:
             print("ImageSummary does NOT EXIST!")
-            print(row["timestamp"])
             # if it doesnt then lets make it! 
             image = ImageSummary(task_id = task_id, file_name = row["file_name"], imageURL = row["imageURL"], 
             group = row["group"], username = row["username"], timeStamp = row["timestamp"], country = row["country"], numComments = row["numComments"],
